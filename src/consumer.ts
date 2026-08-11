@@ -1,10 +1,6 @@
 import "dotenv/config";
 import { ServiceBusClient } from "@azure/service-bus";
-import { args } from "./utils.js";
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+import { args, sleep } from "./utils.js";
 
 async function main() {
   const connectionString = process.env.SERVICE_BUS_CONNECTION_STRING!;

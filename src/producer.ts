@@ -21,6 +21,7 @@ async function main() {
 
   let sentThisSecond = 0;
   let lastSecond = Date.now();
+  const testStart = Date.now();
 
   for (let i = 1; i <= messageCount; i++) {
     const message: ServiceBusMessage = {
@@ -33,6 +34,8 @@ async function main() {
       },
     };
 
+    const start = Date.now();
+
     await sender.sendMessages(message);
 
     const timestamp =
@@ -44,7 +47,11 @@ async function main() {
     console.log(`[Test ${testCaseId}] Total envoyé : ${i} / ${messageCount}`);
 
     sentThisSecond++;
-    await sleep(delayMs); // Wait for the specified delay before sending the next message
+
+    const elapsed = Date.now() - start;
+    const remainingDelay = Math.max(0, delayMs - elapsed);
+
+    await sleep(remainingDelay); // Wait for the specified delay before sending the next message
 
     if (Date.now() - lastSecond >= 1000) {
       console.log(
@@ -56,6 +63,12 @@ async function main() {
     }
   }
 
+  const totalDuration = (Date.now() - testStart) / 1000;
+
+  console.log(`Temps total : ${totalDuration.toFixed(2)} s`);
+  console.log(
+    `Débit moyen : ${(messageCount / totalDuration).toFixed(2)} messages/s`,
+  );
   console.log("Message envoyé !");
 
   await sender.close();
