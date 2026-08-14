@@ -1,15 +1,16 @@
 import "dotenv/config";
 import { ServiceBusClient } from "@azure/service-bus";
-import { args, sleep } from "./utils.js";
+import { args, getRequiredEnv, sleep, type TestMessageBody } from "./utils.js";
 
-const connectionString = process.env.SERVICE_BUS_CONNECTION_STRING!;
-const queueName = process.env.QUEUE_NAME!;
+const connectionString = getRequiredEnv("SERVICE_BUS_CONNECTION_STRING");
+const queueName = getRequiredEnv("QUEUE_NAME");
 
 const client = new ServiceBusClient(connectionString);
 
 const receiver = client.createReceiver(queueName);
 
 const failureRate = Number(args.failureRate ?? 0);
+const maxConcurrentCalls = Number(args.maxConcurrentCalls ?? 1);
 
 let receivedCount = 0;
 let completedCount = 0;
@@ -18,7 +19,6 @@ let totalQueueTime = 0;
 let totalProcessingTime = 0;
 let lastReceivedCount = 0;
 
-// Display test status logs every 10 seconds
 setInterval(() => {
   const averageQueueTime =
     receivedCount === 0 ? 0 : totalQueueTime / receivedCount;
@@ -42,7 +42,7 @@ setInterval(() => {
 receiver.subscribe(
   {
     processMessage: async (message) => {
-      const body = message.body;
+      const body = message.body as TestMessageBody;
 
       const receivedAt = new Date();
       const sentAt = new Date(body.sentAt);
@@ -81,6 +81,6 @@ receiver.subscribe(
     },
   },
   {
-    maxConcurrentCalls: 1,
+    maxConcurrentCalls,
   },
 );

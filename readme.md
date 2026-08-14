@@ -5,13 +5,13 @@
 Consommateur :
 
 ```bash
-npx tsx src/consumer-processor.ts
+npm run consumer:processor
 ```
 
 Producteur :
 
 ```bash
-npx tsx src/producer.ts --messageCount=100 --messagesPerSecond=10
+npm run producer -- --messageCount=100 --messagesPerSecond=10
 ```
 
 ---
@@ -21,32 +21,30 @@ npx tsx src/producer.ts --messageCount=100 --messagesPerSecond=10
 Consommateur :
 
 ```bash
-npx tsx src/consumer-processor.ts
+npm run consumer:processor
 ```
 
 Producteur :
 
 ```bash
-npx tsx src/producer.ts --messageCount=1000 --messagesPerSecond=100
+npm run producer -- --messageCount=1000 --messagesPerSecond=100
 ```
 
 ---
 
 # Scénario 3 — Traitement parallèle
 
-Consommateur :
+Consommateur avec 5 traitements en parallèle :
 
 ```bash
-npx tsx src/consumer-processor.ts
+npm run consumer:processor -- --maxConcurrentCalls=5
 ```
 
-Configurer :
+Puis envoyer des messages avec le producteur :
 
-```ts
-maxConcurrentCalls: 5
+```bash
+npm run producer -- --messageCount=100 --messagesPerSecond=10
 ```
-
-Puis envoyer des messages avec le producteur.
 
 ---
 
@@ -55,13 +53,13 @@ Puis envoyer des messages avec le producteur.
 Consommateur :
 
 ```bash
-npx tsx src/consumer-processor.ts --failureRate=20
+npm run consumer:processor -- --failureRate=20
 ```
 
 Producteur :
 
 ```bash
-npx tsx src/producer.ts --messageCount=100 --messagesPerSecond=10
+npm run producer -- --messageCount=100 --messagesPerSecond=10
 ```
 
 ---
@@ -70,20 +68,20 @@ npx tsx src/producer.ts --messageCount=100 --messagesPerSecond=10
 
 Configurer la queue Azure :
 
-```
+```text
 Max Delivery Count = 5
 ```
 
 Consommateur :
 
 ```bash
-npx tsx src/consumer-processor.ts --failureRate=100
+npm run consumer:processor -- --failureRate=100
 ```
 
 Producteur :
 
 ```bash
-npx tsx src/producer.ts --messageCount=1
+npm run producer -- --messageCount=1
 ```
 
 Vérifier ensuite que le message apparaît dans la **Dead-Letter Queue**.
@@ -92,21 +90,21 @@ Vérifier ensuite que le message apparaît dans la **Dead-Letter Queue**.
 
 # Scénario 6 — Arrêt brutal du consommateur
 
-Remplacer temporairement :
+Démarrer le consommateur avec un traitement long :
 
-```ts
- await sleep(Number(args.processingTimeMs ?? 100));
+```bash
+npm run consumer:processor -- --processingTimeMs=30000
 ```
 
-par :
+Envoyer un message :
 
-```ts
-await sleep(30000);
+```bash
+npm run producer -- --messageCount=1
 ```
 
-Démarrer le consommateur, envoyer un message puis interrompre le programme (`Ctrl + C`) avant la fin du traitement.
+Interrompre le consommateur (`Ctrl + C`) avant la fin du traitement.
 
-Redémarrer ensuite le consommateur pour constater que le message est retraité (voir sur azure).
+Redémarrer ensuite le consommateur pour constater que le message est retraité (voir sur Azure).
 
 ---
 
@@ -114,14 +112,20 @@ Redémarrer ensuite le consommateur pour constater que le message est retraité 
 
 Configurer :
 
-```
+```text
 Lock Duration = 30 secondes
 ```
 
-Puis :
+Démarrer le consommateur avec un traitement plus long que la durée du lock :
 
-```ts
-await sleep(35000);
+```bash
+npm run consumer:processor -- --processingTimeMs=35000
+```
+
+Envoyer un message :
+
+```bash
+npm run producer -- --messageCount=1
 ```
 
 Le traitement dépasse la durée du lock et le message est redistribué automatiquement.

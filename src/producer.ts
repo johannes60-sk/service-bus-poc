@@ -1,16 +1,11 @@
 import "dotenv/config";
 import { ServiceBusClient, type ServiceBusMessage } from "@azure/service-bus";
-import { args } from "./utils.js";
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+import { args, getRequiredEnv, sleep, type TestMessageBody } from "./utils.js";
 
 async function main() {
-  const connectionString = process.env.SERVICE_BUS_CONNECTION_STRING!;
-  const queueName = process.env.QUEUE_NAME!;
+  const connectionString = getRequiredEnv("SERVICE_BUS_CONNECTION_STRING");
+  const queueName = getRequiredEnv("QUEUE_NAME");
 
-  // argument parsing
   const messageCount = Number(args.messageCount ?? 1);
   const messagesPerSecond = Number(args.messagesPerSecond ?? 1);
   const testCaseId = args.testCaseId ?? crypto.randomUUID();
@@ -24,15 +19,15 @@ async function main() {
   const testStart = Date.now();
 
   for (let i = 1; i <= messageCount; i++) {
-    const message: ServiceBusMessage = {
-      body: {
-        id: crypto.randomUUID(),
-        sequence: i,
-        sentAt: new Date().toISOString(),
-        testCaseId: testCaseId,
-        content: `Hello World ${i}`,
-      },
+    const body: TestMessageBody = {
+      id: crypto.randomUUID(),
+      sequence: i,
+      sentAt: new Date().toISOString(),
+      testCaseId,
+      content: `Hello World ${i}`,
     };
+
+    const message: ServiceBusMessage = { body };
 
     const start = Date.now();
 
@@ -51,7 +46,7 @@ async function main() {
     const elapsed = Date.now() - start;
     const remainingDelay = Math.max(0, delayMs - elapsed);
 
-    await sleep(remainingDelay); // Wait for the specified delay before sending the next message
+    await sleep(remainingDelay);
 
     if (Date.now() - lastSecond >= 1000) {
       console.log(
